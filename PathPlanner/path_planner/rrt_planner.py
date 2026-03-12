@@ -125,7 +125,7 @@ class RRTPlanner:
 
         # Divide the line segment into multiple small steps for checking, with a step size of 1 unit
         dist = np.hypot(new_node.x - nearest_node.x, new_node.y - nearest_node.y)
-        steps = max(int(dist / 0.5), 1) 
+        steps = max(int(dist / 0.2), 1) 
         margin = 2  # robot safety radius, force away from obstacles
         
         for i in range(steps + 1):
