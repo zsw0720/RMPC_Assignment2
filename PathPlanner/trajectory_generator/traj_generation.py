@@ -32,20 +32,10 @@ class TrajGenerator:
         
         # TODO: Calculate gear and station (distance) information
         # YOUR CODE STARTS HERE
-        for i in range(1, nfe):
-            dx = result.states[i].x - result.states[i-1].x
-            dy = result.states[i].y - result.states[i-1].y
-            
-            # 同样需要用 normalize_angle 处理两帧之间的角度差
-            dtheta = self.normalize_angle(result.states[i].theta - result.states[i-1].theta)
-            
-            # 计算速度并限制最大速度，切除末端毛刺
-            result.states[i].v = min(math.hypot(dx, dy) / dt, self.max_velocity)
-            result.states[i].omega = dtheta / dt
-
-        result.states[0].v = result.states[1].v
-        result.states[0].omega = result.states[1].omega
-        # YOUR CODE ENDS HERE
+        gears[0] = 1
+        for i in range(1, len(path)):
+            stations[i] = stations[i-1] + self.distance(path[i-1], path[i])
+            gears[i] = 1
 
         # Calculate the time profile for the trajectory
         # YOUR CODE STARTS HERE
@@ -139,7 +129,7 @@ class TrajGenerator:
 
         # TODO: Implement acceleration phase
         # YOUR CODE STARTS HERE
-            profile[0] = 0.0
+        profile[0] = 0.0
         for i in range(len(stations) - 1):
             ds = stations[i+1] - stations[i]
             # vf = sqrt(vi^2 + 2*a*d)

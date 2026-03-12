@@ -60,8 +60,7 @@ class LatticeGraph:
         Returns:
             list: Path from start to goal as a list of vertices.
         """
-        if current_node[0] == g[0] and current_node[1] == g[1]:
-            return self.traverse_path(s, current_node, parent_node)
+        return self.solver.solve_astar(s, g, graph_vert_list, adjacency_matrix, edge_dict)
 
     def generate_lattice(self, n_rows, n_cols, lattice_cell_size):
         """
@@ -206,7 +205,6 @@ class Astar:
         open_set.put((0, s))
         # TODO: Implement A* algorithm logic
         # YOUR CODE STARTS HERE
-        # 初始化所有节点的代价
         for v in graph_vert_list:
             distances[v] = np.inf
             costs[v] = np.inf
@@ -224,8 +222,8 @@ class Astar:
                 continue
                 
             # If the node is the goal, return the path
-            if current_node == g:
-                return self.traverse_path(s, g, parent_node)
+            if current_node[0] == g[0] and current_node[1] == g[1]:
+                return self.traverse_path(s, current_node, parent_node)
                 
             closed_set.add(current_node)
             
