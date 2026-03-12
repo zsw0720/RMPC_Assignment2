@@ -63,7 +63,7 @@ def main(args=None):
     path_prm = prm.plan()
 
     if path:
-        # Interpolate the path for smoothness
+        # Interpolate the path for smoothness (Lattice only)
         path_interpolated = traj_generator.path_interpolation(path, graph, lattice_cell_size, 10)
 
         # Resample the interpolated path to generate a trajectory
@@ -72,22 +72,48 @@ def main(args=None):
         # Print the number of states in the trajectory
         print("trajectory length = ", len(result.states))
 
-        # Visualization section
-        # Plot the trajectory
-        x = []
-        y = []
-        for i in range(len(result.states)):
-            x.append(result.states[i].x)  
-            y.append(result.states[i].y) 
-        # Plot the time-velocity curve 
-        v = []
-        for i in range(len(result.states)):
-            v.append(result.states[i].v)
-        plt.plot(v)
-        plt.plot(y, x, color='green', linewidth=2.0)  
+        # ==========================================
+        # 1. create a Figure to plot the velocity-time curve
+        # ==========================================
+        plt.figure("Velocity-Time Curve")
+        v = [result.states[i].v for i in range(len(result.states))]
+        plt.plot(v, color='blue', linewidth=2.0)
+        plt.title("Trapezoidal Velocity Profile (Lattice Planner)")
+        plt.xlabel("Time Steps")
+        plt.ylabel("Velocity")
+        plt.grid(True)
 
-    # Plot the obstacle map and trajectory
+    # ==========================================
+    # 2. create a Figure to plot the obstacle map and all planned paths
+    # ==========================================
+    # generate the basic obstacle map
     fig = plot_map(obs_plot, graph, lattice_cell_size)
+
+    # overlay the lattice path (green)
+    if path:
+        lattice_row = [result.states[i].x for i in range(len(result.states))]
+        lattice_col = [result.states[i].y for i in range(len(result.states))]
+        # Note: In the matrix image, the horizontal axis is col (y), and the vertical axis is row (x)
+        plt.plot(lattice_col, lattice_row, color='green', linewidth=2.0, label='Lattice Path')
+
+    # overlay the RRT path (red)
+    if path_rrt:
+        # Divide the original coordinates by scaler for scaling alignment
+        rrt_row = [p[0] / scaler for p in path_rrt]
+        rrt_col = [p[1] / scaler for p in path_rrt]
+        plt.plot(rrt_col, rrt_row, color='red', linewidth=1.5, label='RRT Path')
+
+    # overlay the PRM path (blue)
+    if path_prm:
+        # Divide the original coordinates by scaler for scaling alignment
+        prm_row = [p[0] / scaler for p in path_prm]
+        prm_col = [p[1] / scaler for p in path_prm]
+        plt.plot(prm_col, prm_row, color='blue', linewidth=1.5, linestyle='--', label='PRM Path')
+
+    # add a legend to distinguish the three paths
+    plt.legend(loc='upper right')
+    
+    # show all the figures
     plt.show()
 
 if __name__ == '__main__':
