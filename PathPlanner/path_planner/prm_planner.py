@@ -72,13 +72,17 @@ class PRMPlanner:
         Returns:
         Node: A randomly sampled node.
         """
-
+        margin = 2  
         while True:
             rand_x = np.random.uniform(0, self.map_size[0])
             rand_y = np.random.uniform(0, self.map_size[1])
+            ix, iy = int(rand_x), int(rand_y)
             
-            # call is_point_valid in utils.py
-            if self.obstacles.is_point_valid((int(rand_x), int(rand_y))):
+            if self.obstacles.is_point_valid((ix, iy)) \
+               and self.obstacles.is_point_valid((ix + margin, iy)) \
+               and self.obstacles.is_point_valid((ix - margin, iy)) \
+               and self.obstacles.is_point_valid((ix, iy + margin)) \
+               and self.obstacles.is_point_valid((ix, iy - margin)):
                 return Node(rand_x, rand_y)
 
     def find_k_nearest(self, node, k):
@@ -125,14 +129,19 @@ class PRMPlanner:
         """
 
         dist = np.hypot(node2.x - node1.x, node2.y - node1.y)
-        steps = max(int(dist / self.step_size), 1) 
+        steps = max(int(dist / 1.0), 1) 
+        margin = 2  # fix: keep safe distance when connecting nodes
         
         for i in range(steps + 1):
             x = node1.x + i * (node2.x - node1.x) / steps
             y = node1.y + i * (node2.y - node1.y) / steps
+            ix, iy = int(x), int(y)
             
-            # call is_point_valid in utils.py
-            if not self.obstacles.is_point_valid((int(x), int(y))):
+            if not self.obstacles.is_point_valid((ix, iy)) \
+               or not self.obstacles.is_point_valid((ix + margin, iy)) \
+               or not self.obstacles.is_point_valid((ix - margin, iy)) \
+               or not self.obstacles.is_point_valid((ix, iy + margin)) \
+               or not self.obstacles.is_point_valid((ix, iy - margin)):
                 return True
                 
         return False

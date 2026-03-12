@@ -124,18 +124,25 @@ class RRTPlanner:
         """
 
         # Divide the line segment into multiple small steps for checking, with a step size of 1 unit
-dist = np.hypot(new_node.x - nearest_node.x, new_node.y - nearest_node.y)
+        dist = np.hypot(new_node.x - nearest_node.x, new_node.y - nearest_node.y)
         steps = max(int(dist / 1.0), 1) 
+        margin = 2  # robot safety radius, force away from obstacles
         
         for i in range(steps + 1):
             x = nearest_node.x + i * (new_node.x - nearest_node.x) / steps
             y = nearest_node.y + i * (new_node.y - nearest_node.y) / steps
+            ix, iy = int(x), int(y)
             
-            # 准确调用 utils.py 中的 is_point_valid
-            if not self.obstacles.is_point_valid((int(x), int(y))):
-                return True  # 如果不 valid，说明发生碰撞
+            # check if the point is within the margin range
+            if not self.obstacles.is_point_valid((ix, iy)) \
+               or not self.obstacles.is_point_valid((ix + margin, iy)) \
+               or not self.obstacles.is_point_valid((ix - margin, iy)) \
+               or not self.obstacles.is_point_valid((ix, iy + margin)) \
+               or not self.obstacles.is_point_valid((ix, iy - margin)):
+                return True
                 
-        return False    
+        return False
+        
 
     def reached_goal(self, new_node):
         """
