@@ -60,8 +60,8 @@ class LatticeGraph:
         Returns:
             list: Path from start to goal as a list of vertices.
         """
-        path = self.solver.solve_astar(s, g, graph_vert_list, adjacency_matrix, edge_dict)
-        return path
+        if current_node[0] == g[0] and current_node[1] == g[1]:
+            return self.traverse_path(s, current_node, parent_node)
 
     def generate_lattice(self, n_rows, n_cols, lattice_cell_size):
         """
