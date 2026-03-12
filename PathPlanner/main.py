@@ -26,8 +26,8 @@ def main(args=None):
     # Define the start and goal positions with orientation
     s_3d = (1, 8, 90)  # Start position: row, col, angle
     g_3d = (8, 2, 270)  # Goal position: row, col, angle
-    s_2d = (1, 8, 90)  # Start position: row, col
-    g_2d = (8, 2, 270)  # Goal position: row, col
+    s_2d = (8 * lattice_cell_size, 1 * lattice_cell_size)  
+    g_2d = (2 * lattice_cell_size, 8 * lattice_cell_size)
 
     # Initialize obstacle grids
     obs = ObstaclesGrid(map_size=(n_rows * lattice_cell_size, n_cols * lattice_cell_size))

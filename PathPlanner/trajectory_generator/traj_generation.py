@@ -86,12 +86,16 @@ class TrajGenerator:
         for i in range(1, nfe):
             dx = result.states[i].x - result.states[i-1].x
             dy = result.states[i].y - result.states[i-1].y
-            dtheta = result.states[i].theta - result.states[i-1].theta
+            dtheta = self.normalize_angle(result.states[i].theta - result.states[i-1].theta)
             
-            result.states[i].v = math.hypot(dx, dy) / dt
-            result.states[i].omega = dtheta / dt
-            
-        # Align the velocity and angular velocity of the initial point with the first action point
+            # 核心修复：强制最后一个点的速度严格为 0，切除除法导致的末端毛刺
+            if i == nfe - 1:
+                result.states[i].v = 0.0
+                result.states[i].omega = 0.0
+            else:
+                result.states[i].v = min(math.hypot(dx, dy) / dt, self.max_velocity)
+                result.states[i].omega = dtheta / dt
+
         result.states[0].v = result.states[1].v
         result.states[0].omega = result.states[1].omega
         # YOUR CODE ENDS HERE
