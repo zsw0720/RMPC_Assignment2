@@ -88,7 +88,7 @@ class TrajGenerator:
             dy = result.states[i].y - result.states[i-1].y
             dtheta = self.normalize_angle(result.states[i].theta - result.states[i-1].theta)
             
-            # 核心修复：强制最后一个点的速度严格为 0，切除除法导致的末端毛刺
+            # let the last point velocity be 0
             if i == nfe - 1:
                 result.states[i].v = 0.0
                 result.states[i].omega = 0.0
@@ -96,8 +96,9 @@ class TrajGenerator:
                 result.states[i].v = min(math.hypot(dx, dy) / dt, self.max_velocity)
                 result.states[i].omega = dtheta / dt
 
-        result.states[0].v = result.states[1].v
-        result.states[0].omega = result.states[1].omega
+        # let the 0th point (start) velocity be 0
+        result.states[0].v = 0.0
+        result.states[0].omega = 0.0
         # YOUR CODE ENDS HERE
 
         # TODO: Calculate accelerations and angular accelerations
