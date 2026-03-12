@@ -77,15 +77,9 @@ class PRMPlanner:
             rand_x = np.random.uniform(0, self.map_size[0])
             rand_y = np.random.uniform(0, self.map_size[1])
             
-            # Check if the point is inside an obstacle. The specific method name needs to be adjusted according to your utils.py
-            if hasattr(self.obstacles, 'is_valid'):
-                if self.obstacles.is_valid((rand_x, rand_y)):
-                    return Node(rand_x, rand_y)
-            elif hasattr(self.obstacles, 'is_colliding'):
-                if not self.obstacles.is_colliding(rand_x, rand_y):
-                    return Node(rand_x, rand_y)
-            else:
-                return Node(rand_x, rand_y) # Default return
+            # call is_point_valid in utils.py
+            if self.obstacles.is_point_valid((int(rand_x), int(rand_y))):
+                return Node(rand_x, rand_y)
 
     def find_k_nearest(self, node, k):
         """
@@ -137,9 +131,8 @@ class PRMPlanner:
             x = node1.x + i * (node2.x - node1.x) / steps
             y = node1.y + i * (node2.y - node1.y) / steps
             
-            if hasattr(self.obstacles, 'is_valid') and not self.obstacles.is_valid((x, y)):
-                return True
-            elif hasattr(self.obstacles, 'is_colliding') and self.obstacles.is_colliding(x, y):
+            # call is_point_valid in utils.py
+            if not self.obstacles.is_point_valid((int(x), int(y))):
                 return True
                 
         return False

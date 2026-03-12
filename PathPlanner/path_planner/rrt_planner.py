@@ -124,22 +124,18 @@ class RRTPlanner:
         """
 
         # Divide the line segment into multiple small steps for checking, with a step size of 1 unit
-        dist = np.hypot(new_node.x - nearest_node.x, new_node.y - nearest_node.y)
+dist = np.hypot(new_node.x - nearest_node.x, new_node.y - nearest_node.y)
         steps = max(int(dist / 1.0), 1) 
         
         for i in range(steps + 1):
             x = nearest_node.x + i * (new_node.x - nearest_node.x) / steps
             y = nearest_node.y + i * (new_node.y - nearest_node.y) / steps
             
-            # Assume the obstacles object has a method similar to is_point_colliding
-            # The specific method name may need to be adjusted according to your utils.py, common usage is as follows:
-            if hasattr(self.obstacles, 'is_colliding'):
-                if self.obstacles.is_colliding(x, y):
-                    return True
-            elif hasattr(self.obstacles, 'is_valid'): # Another common naming
-                if not self.obstacles.is_valid((x, y)):
-                    return True
-        return False
+            # 准确调用 utils.py 中的 is_point_valid
+            if not self.obstacles.is_point_valid((int(x), int(y))):
+                return True  # 如果不 valid，说明发生碰撞
+                
+        return False    
 
     def reached_goal(self, new_node):
         """
