@@ -129,7 +129,7 @@ class PRMPlanner:
         """
 
         dist = np.hypot(node2.x - node1.x, node2.y - node1.y)
-        steps = max(int(dist / 1.0), 1) 
+        steps = max(int(dist / 0.5), 1) 
         margin = 2  # fix: keep safe distance when connecting nodes
         
         for i in range(steps + 1):
