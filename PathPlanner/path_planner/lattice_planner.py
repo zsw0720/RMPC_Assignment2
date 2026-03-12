@@ -206,7 +206,48 @@ class Astar:
         open_set.put((0, s))
         # TODO: Implement A* algorithm logic
         # YOUR CODE STARTS HERE
-        pass   
+        # 初始化所有节点的代价
+        for v in graph_vert_list:
+            distances[v] = np.inf
+            costs[v] = np.inf
+            parent_node[v] = None
+            
+        distances[s] = 0
+        costs[s] = self.calH(s, g)
+        open_set.put((costs[s], s))
+        
+        while not open_set.empty():
+            current_cost, current_node = open_set.get()
+            
+            # If the node has been processed, skip it
+            if current_node in closed_set:
+                continue
+                
+            # If the node is the goal, return the path
+            if current_node == g:
+                return self.traverse_path(s, g, parent_node)
+                
+            closed_set.add(current_node)
+            
+            # Get all valid neighbors of the current node
+            neighbors = self.get_neighbor(current_node, graph_vert_list, adjacency_matrix)
+            
+            for neighbor in neighbors:
+                if neighbor in closed_set:
+                    continue
+                    
+                # Calculate the actual cost to reach the neighbor node g(n)
+                tentative_distance = distances[current_node] + self.cal_expand_cost(current_node, neighbor, edge_dict)
+                
+                # If a better path is found, update the neighbor's information
+                if tentative_distance < distances[neighbor]:
+                    distances[neighbor] = tentative_distance
+                    # Calculate the total cost f(n) = g(n) + h(n)
+                    costs[neighbor] = distances[neighbor] + self.calH(neighbor, g)
+                    parent_node[neighbor] = current_node
+                    open_set.put((costs[neighbor], neighbor))
+                    
+        return []  # If no path is found, return an empty list
         # YOUR CODE ENDS HERE
 
     def traverse_path(self, s, g, parent_node):
@@ -223,7 +264,16 @@ class Astar:
         """
         # TODO: Implement logic to backtrack from goal to start using parent_node
         # YOUR CODE STARTS HERE
-        pass
+        path = []
+        current = g
+        while current is not None:
+            path.append(current)
+            if current == s:
+                break
+            current = parent_node.get(current)
+        #cause we find the path from g to s, so we need to reverse the path
+        path.reverse()
+        return path
         # YOUR CODE ENDS HERE
 
     def get_neighbor(self, u, graph_vert_list, adjacency_matrix):
@@ -252,7 +302,10 @@ class Astar:
         """
         # TODO: Return the expansion cost
         # YOUR CODE STARTS HERE
-        pass
+        # If the edge exists, return the corresponding value; otherwise, return infinity.
+        if (v1, v2) in edge_dict:
+            return edge_dict[(v1, v2)]
+        return np.inf 
         # YOUR CODE ENDS HERE
 
     def calH(self, v1, v2):
@@ -268,5 +321,6 @@ class Astar:
         """
         # TODO: Return the heuristic cost
         # YOUR CODE STARTS HERE
-        pass
+        # Calculate the heuristic cost using Euclidean distance. The formats of v1 and v2 are (row, col, angle)
+        return np.sqrt((v1[0] - v2[0])**2 + (v1[1] - v2[1])**2)
         # YOUR CODE ENDS HERE

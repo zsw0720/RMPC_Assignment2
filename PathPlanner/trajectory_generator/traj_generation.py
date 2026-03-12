@@ -32,7 +32,11 @@ class TrajGenerator:
         
         # TODO: Calculate gear and station (distance) information
         # YOUR CODE STARTS HERE
-    
+        gears[0] = 1
+        for i in range(1, len(path)):
+            # Accumulate the distance of the previous point and the current segment
+            stations[i] = stations[i-1] + self.distance(path[i-1], path[i])
+            gears[i] = 1  # Assume default is forward gear
         # YOUR CODE ENDS HERE
 
         # Calculate the time profile for the trajectory
@@ -81,12 +85,25 @@ class TrajGenerator:
 
         # TODO: Calculate velocities and angular velocities for the trajectory
         # YOUR CODE STARTS HERE
-    
+        for i in range(1, nfe):
+            dx = result.states[i].x - result.states[i-1].x
+            dy = result.states[i].y - result.states[i-1].y
+            dtheta = result.states[i].theta - result.states[i-1].theta
+            
+            result.states[i].v = math.hypot(dx, dy) / dt
+            result.states[i].omega = dtheta / dt
+            
+        # Align the velocity and angular velocity of the initial point with the first action point
+        result.states[0].v = result.states[1].v
+        result.states[0].omega = result.states[1].omega
         # YOUR CODE ENDS HERE
 
         # TODO: Calculate accelerations and angular accelerations
         # YOUR CODE STARTS HERE
-    
+        for i in range(1, nfe):
+            result.states[i].a = (result.states[i].v - result.states[i-1].v) / dt
+            
+        result.states[0].a = result.states[1].a
         # YOUR CODE ENDS HERE
 
         return result
@@ -114,15 +131,25 @@ class TrajGenerator:
 
         # TODO: Implement acceleration phase
         # YOUR CODE STARTS HERE
+            profile[0] = 0.0
         for i in range(len(stations) - 1):
-            pass
+            ds = stations[i+1] - stations[i]
+            # vf = sqrt(vi^2 + 2*a*d)
+            vf = math.sqrt(profile[i]**2 + 2 * max_accel * ds)
+            # Limit the velocity to the maximum velocity
+            profile[i+1] = min(vf, max_velocity)
         # YOUR CODE ENDS HERE
 
         # TODO: Implement deceleration phase
         vi = 0.0
         # YOUR CODE STARTS HERE
-        for i in range(len(stations) - 1, accel_idx, -1):
-            pass
+        profile[-1] = 0.0
+        for i in range(len(stations) - 1, 0, -1):
+            ds = stations[i] - stations[i-1]
+            vf = math.sqrt(profile[i]**2 + 2 * max_accel * ds)
+            # Limit the velocity to the maximum velocity
+            profile[i-1] = min(profile[i-1], vf)
+
         # YOUR CODE ENDS HERE
 
         # TODO: Fill constant velocity phase
@@ -218,7 +245,7 @@ class TrajGenerator:
         """
         # TODO: Normalize an angle to the range [-pi, pi]
         # YOUR CODE STARTS HERE
-        pass
+        return (angle + math.pi) % (2 * math.pi) - math.pi
         # YOUR CODE ENDS HERE
 
     def distance(self, p1, p2):
@@ -234,7 +261,7 @@ class TrajGenerator:
         """
         # TODO: Calculate Euclidean distance between two points
         # YOUR CODE STARTS HERE
-        pass
+        return math.hypot(p1[0] - p2[0], p1[1] - p2[1])
         # YOUR CODE ENDS HERE
 
     def to_continuous_angle(self, angles):
@@ -249,7 +276,14 @@ class TrajGenerator:
         """
         # TODO: Convert a list of angles into a continuous angle representation.
         # YOUR CODE STARTS HERE
-        pass
+        if not angles:
+            return []
+        cont_angles = [angles[0]]
+        for i in range(1, len(angles)):
+            # Find the shortest angle difference and accumulate it to avoid the mutation of 180 degrees to -180 degrees
+            diff = self.normalize_angle(angles[i] - cont_angles[-1])
+            cont_angles.append(cont_angles[-1] + diff)
+        return cont_angles
         # YOUR CODE ENDS HERE
 
 

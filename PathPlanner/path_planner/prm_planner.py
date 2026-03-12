@@ -47,7 +47,23 @@ class PRMPlanner:
         None
         """
 
-        pass
+        self.roadmap.append(self.start)
+        self.roadmap.append(self.goal)
+        
+        # 1. Sample points
+        for _ in range(self.num_samples):
+            self.roadmap.append(self.sample_free_point())
+            
+        # 2. Initialize edge dictionary
+        for node in self.roadmap:
+            self.edges[node] = []
+            
+        # 3. Connect nodes
+        for node in self.roadmap:
+            neighbors = self.find_k_nearest(node, self.k_neighbors)
+            for neighbor in neighbors:
+                if not self.is_colliding(node, neighbor):
+                    self.edges[node].append(neighbor)
 
     def sample_free_point(self):
         """
@@ -57,7 +73,19 @@ class PRMPlanner:
         Node: A randomly sampled node.
         """
 
-        pass
+        while True:
+            rand_x = np.random.uniform(0, self.map_size[0])
+            rand_y = np.random.uniform(0, self.map_size[1])
+            
+            # Check if the point is inside an obstacle. The specific method name needs to be adjusted according to your utils.py
+            if hasattr(self.obstacles, 'is_valid'):
+                if self.obstacles.is_valid((rand_x, rand_y)):
+                    return Node(rand_x, rand_y)
+            elif hasattr(self.obstacles, 'is_colliding'):
+                if not self.obstacles.is_colliding(rand_x, rand_y):
+                    return Node(rand_x, rand_y)
+            else:
+                return Node(rand_x, rand_y) # Default return
 
     def find_k_nearest(self, node, k):
         """
@@ -71,7 +99,24 @@ class PRMPlanner:
             list: A list of k-nearest neighbor nodes.
         """
 
-        pass
+        if len(self.roadmap) <= 1:
+            return []
+            
+        coords = np.array([[n.x, n.y] for n in self.roadmap])
+        tree = KDTree(coords)
+        
+        # Search for k+1 nodes, because node itself (if already in the graph) will also be counted as a neighbor with distance 0
+        distances, indices = tree.query([node.x, node.y], k=min(k + 1, len(self.roadmap)))
+        
+        neighbors = []
+        # Handle the case where indices may be a scalar
+        for idx in np.atleast_1d(indices):
+            if self.roadmap[idx] != node:
+                neighbors.append(self.roadmap[idx])
+            if len(neighbors) == k:
+                break
+                
+        return neighbors
 
     def is_colliding(self, node1, node2):
         """
@@ -85,7 +130,19 @@ class PRMPlanner:
             bool: True if there is a collision, False otherwise.
         """
 
-        pass
+        dist = np.hypot(node2.x - node1.x, node2.y - node1.y)
+        steps = max(int(dist / self.step_size), 1) 
+        
+        for i in range(steps + 1):
+            x = node1.x + i * (node2.x - node1.x) / steps
+            y = node1.y + i * (node2.y - node1.y) / steps
+            
+            if hasattr(self.obstacles, 'is_valid') and not self.obstacles.is_valid((x, y)):
+                return True
+            elif hasattr(self.obstacles, 'is_colliding') and self.obstacles.is_colliding(x, y):
+                return True
+                
+        return False
 
     def plan(self):
         """
@@ -95,4 +152,42 @@ class PRMPlanner:
         list: A list of (x, y) tuples representing the path.
         """
 
-        pass
+        self.construct_roadmap()
+        
+        from queue import PriorityQueue
+        open_set = PriorityQueue()
+        # Store format: (cost, node ID to avoid comparison conflicts, node object)
+        open_set.put((0, id(self.start), self.start))
+        
+        came_from = {self.start: None}
+        cost_so_far = {self.start: 0}
+        
+        while not open_set.empty():
+            _, _, current = open_set.get()
+            
+            if current == self.goal:
+                break
+                
+            for next_node in self.edges.get(current, []):
+                new_cost = cost_so_far[current] + np.hypot(next_node.x - current.x, next_node.y - current.y)
+                
+                if next_node not in cost_so_far or new_cost < cost_so_far[next_node]:
+                    cost_so_far[next_node] = new_cost
+                    # Add heuristic distance (A* logic)
+                    priority = new_cost + np.hypot(self.goal.x - next_node.x, self.goal.y - next_node.y)
+                    open_set.put((priority, id(next_node), next_node))
+                    came_from[next_node] = current
+                    
+        if self.goal not in came_from:
+            print("Path not found.")
+            return None
+            
+        # Backtrack path
+        path = []
+        current = self.goal
+        while current is not None:
+            path.append((current.x, current.y))
+            current = came_from.get(current)
+            
+        path.reverse()
+        return path
